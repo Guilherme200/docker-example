@@ -1,0 +1,53 @@
+version: '3'
+
+volumes:
+  postgres-data:
+    driver: local
+  portainer-data:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge
+
+services:
+  site:
+    container_name: site
+    build: ./images/nginx/.
+    ports:
+      - 80:80
+    volumes:
+      - ./images/nginx:/usr/share/nginx/html
+
+  postgres:
+    container_name: postgres
+    image: postgres:9
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=app_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=dockercompose
+    networks:
+      - backend
+
+  redis:
+    container_name: redis
+    image: redis:5.0
+    command: --appendonly no
+    networks:
+      - backend
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 9000:9000
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
